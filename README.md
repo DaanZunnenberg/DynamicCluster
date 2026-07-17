@@ -25,6 +25,31 @@ package.** The model implementation now lives in the `dynamiccluster`
 package, driven by a thin entry-point script; the sections below describe
 this structure and will keep evolving as the package matures.
 
+## Mathematical Framework
+
+The model couples a Hidden Markov Model (HMM) style mixture model with Generalized Autoregressive Score (GAS) dynamics to track time-varying cluster structures in multivariate panel data $y_{i,t} \in \mathbb{R}^D$ for units $i = 1, \dots, N$ at times $t = 1, \dots, T$.
+
+### 1. Mixture Model & HMM Transitions
+Each unit $i$ belongs to a latent cluster $s_{i,t} \in \{1, \dots, K\}$. Conditional on cluster membership, the observations follow:
+$$y_{i,t} \mid s_{i,t} = k \sim \mathcal{N}(\mu_{k,t}, \Sigma_{k,t})$$
+
+The transition probabilities are driven by the distance **between cluster means**, not by any individual unit's own observation — the same transition matrix $\Pi_t$ applies to every unit, and a unit's own previous state $j$ only selects which row of $\Pi_t$ governs its next transition:
+$$\pi_{t}^{(j \to k)} = P(s_{i,t} = k \mid s_{i,t-1} = j) = \frac{\exp(-\gamma \cdot d(\mu_{j,t-1}, \mu_{k,t-1}))}{\sum_{m=1}^K \exp(-\gamma \cdot d(\mu_{j,t-1}, \mu_{m,t-1}))}$$
+
+where $d(\cdot)$ is a Mahalanobis distance between cluster means (using a covariance pooled/averaged across clusters), scaled by a sensitivity parameter $\gamma$.
+
+### 2. GAS Update (Score-Driven Dynamics)
+Instead of treating cluster parameters as static, the cluster means $\mu_{k,t}$ (mapped to a vector of time-varying parameters $f_{t}$) evolve over time. The updating mechanism is driven by the gradient of the log-likelihood (the score):
+
+$$f_{t+1} = \omega + A s_t + B f_t$$
+
+Where:
+* $s_t = S_t \cdot \nabla_t$ is the scaled score step.
+* $\nabla_t = \frac{\partial \ln p(y_t \mid f_t)}{\partial f_t}$ is the score vector (the first derivative of the log-likelihood of the mixture density at time $t$ with respect to the parameter vector $f_t$).
+* $S_t$ is a scaling matrix (typically the inverse Fisher Information Matrix or the identity matrix).
+* $\omega$, $A$, and $B$ are static coefficient matrices estimated via Maximum Likelihood Estimation (MLE).
+
+**Current implementation note:** in `dynamiccluster/estimation.py`, only the cluster means $\mu_{k,t}$ are actually score-driven, with $\omega = 0$ and $B = I$ hardcoded (so the update reduces to $f_{t+1} = f_t + A\,s_t$, a single-parameter EWMA-style step, as noted in `run_hmm_gas_filter`'s docstring). The covariance's GAS coefficient is currently fixed to `0` in `extract_parameters`, so $\Sigma_{k,t}$ is **not** time-varying in practice — it stays at its k-means-initialized value for the whole run, despite being part of the general model above.
 ## Repository contents
 
 | Path | Role |
