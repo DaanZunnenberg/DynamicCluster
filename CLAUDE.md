@@ -4,9 +4,9 @@
 
 This repository implements a GAS (Generalized Autoregressive Score) filter
 driving an HMM-style dynamic mixture model for clustering multivariate panel
-data, with simulation and estimation in a Python package (`dynamiccluster/`)
-and post-processing/plotting in R (`R/prepareDataForPlotting.R`,
-`R/plottingRoutines.R`).
+data, with simulation and estimation in a Python package (`dynamiccluster/`).
+There is no R (or other non-Python) code in this repository; keep it that
+way unless explicitly asked to add a separate post-processing layer.
 
 We are turning this into a proper, installable/reusable **package** based on
 the theory and methods implemented here, rather than a one-off simulation
@@ -47,8 +47,5 @@ experiment:
   configuration (`random_seed`, `n_simulations`, `run_in_parallel`,
   `simulation_type`, ...), runs simulation + estimation, writes results
   to CSV.
-- `R/prepareDataForPlotting.R` — reads simulation CSV, produces `.RData`.
-- `R/plottingRoutines.R` — reads `.RData`, produces plots into `Results/`.
-- `Results/` — output plots/results.
 
 See README.md for full details on usage and the GAS filter algorithm.

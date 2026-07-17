@@ -18,13 +18,12 @@ The current codebase is a research-style simulation study: it simulates
 panel data under a known dynamic-clustering data-generating process,
 estimates the model's parameters via maximum likelihood, and evaluates
 how well the estimated clusters recover the true (simulated) cluster
-structure. Results are written to disk and visualized separately.
+structure. Results are written to disk as a `.csv` file.
 
-**This repository is being restructured into a proper, reusable Python
-package.** It has moved from a flat collection of scripts into a
-`dynamiccluster` package plus a thin driver script; the sections below
-describe this current structure and will keep evolving as the package
-matures.
+**This repository has been restructured into a proper, reusable Python
+package.** The model implementation now lives in the `dynamiccluster`
+package, driven by a thin entry-point script; the sections below describe
+this structure and will keep evolving as the package matures.
 
 ## Repository contents
 
@@ -37,71 +36,51 @@ matures.
 | `dynamiccluster/estimation.py` | Maximum-likelihood estimation: parameter (re)parameterization, k-means initialization, the HMM/GAS filter recursion (`run_hmm_gas_filter`), and the `estimate_maximum_likelihood` driver. |
 | `dynamiccluster/utils.py` | Generic numerical helpers (vectorization/half-vectorization of matrices, logit/logistic transforms) that are not specific to this method. |
 | `scripts/run_simulation.py` | Entry point script. Defines simulation/estimation configuration ("magic numbers"), runs the simulation-estimation loop (optionally in parallel across simulations) using the `dynamiccluster` package, and writes results to a `.csv` file. |
-| `R/prepareDataForPlotting.R` | Reads the simulation `.csv` output and processes it into an intermediate `.RData` object. |
-| `R/plottingRoutines.R` | Reads the `.RData` object and produces the plots found in `Results/`. |
-| `Results/` | Output directory for generated plots and result artifacts. |
 
 ## Dependency graph
 
-### Python simulation/estimation pipeline
-
 ```mermaid
 graph TD
-    run[scripts/run_simulation.py] --> pkg[dynamiccluster]
-    pkg --> state[state.py]
-    pkg --> init[initialization.py]
-    pkg --> sim[simulation.py]
-    pkg --> est[estimation.py]
-    init --> utils[utils.py]
-    sim --> utils
+    run[scripts/run_simulation.py] --> state[state.py]
+    run --> init[initialization.py]
+    run --> sim[simulation.py]
+    run --> est[estimation.py]
+    sim --> utils[utils.py]
     est --> sim
     est --> utils
 
     run -->|writes| csv[(results .csv)]
 ```
 
-- `scripts/run_simulation.py` imports `SimulationState`,
-  `initialize_simulation_matrices`, `simulate_data`, and
-  `estimate_maximum_likelihood` from the `dynamiccluster` package
-  (re-exported via `dynamiccluster/__init__.py`).
-- `initialization.py` builds the time-varying parameter/data structures
-  used by both simulation and estimation.
+- `scripts/run_simulation.py` imports `SimulationState` and
+  `initialize_simulation_matrices` from the `dynamiccluster` package
+  (re-exported via `dynamiccluster/__init__.py`), and imports directly
+  from `dynamiccluster.simulation` and `dynamiccluster.estimation` for
+  `simulate_data`/`estimate_maximum_likelihood` plus their parameter-dict
+  key constants.
+- `state.py` and `initialization.py` have no dependencies on the other
+  `dynamiccluster` modules; they only build the plain data structures
+  the rest of the package operates on.
 - `simulation.py` implements the data-generating process (initial/updated
   cluster means, transition-probability generation, `simulate_data`) and
   depends on `utils.py` for vectorization helpers.
 - `estimation.py` implements maximum-likelihood estimation, including the
   HMM/GAS filter recursion (`run_hmm_gas_filter`); it reuses the
-  distance/transition-probability functions from `simulation.py` and the
-  vectorization/logit helpers from `utils.py`.
-
-### R post-processing/plotting pipeline
-
-```mermaid
-graph TD
-    csv[(results .csv)] --> prepare[R/prepareDataForPlotting.R]
-    prepare -->|writes| rdata[(.RData)]
-    rdata --> plotting[R/plottingRoutines.R]
-    plotting -->|writes| results[Results/]
-```
-
-- `R/prepareDataForPlotting.R` reads the `.csv` produced by
-  `scripts/run_simulation.py` and saves an intermediate `.RData` object.
-- `R/plottingRoutines.R` reads that `.RData` object and generates the
-  plots saved under `Results/`.
+  distance/transition-probability functions from `simulation.py` (
+  `compute_cluster_distance_matrix`, `map_distances_to_transition_probabilities`)
+  and the vectorization/logit helpers from `utils.py`.
 
 ## Running the code
 
-1. From the repository root, run `python scripts/run_simulation.py` to
-   simulate data, estimate parameters, and write the results `.csv`.
-   Configure the simulation/estimation parameters at the top of
-   `scripts/run_simulation.py`, in particular:
-   - `random_seed`
-   - `n_simulations`
-   - `run_in_parallel` (default `False`; enables multi-core execution — leave
-     `False` while exploring/debugging)
-   - `simulation_type`
-2. Run `R/prepareDataForPlotting.R` followed by `R/plottingRoutines.R` to
-   process and visualize the results.
+From the repository root, run `python scripts/run_simulation.py` to
+simulate data, estimate parameters, and write the results `.csv`.
+Configure the simulation/estimation parameters at the top of
+`scripts/run_simulation.py`, in particular:
+- `random_seed`
+- `n_simulations`
+- `run_in_parallel` (default `False`; enables multi-core execution — leave
+  `False` while exploring/debugging)
+- `simulation_type`
 
 ## Notes on the GAS filter
 
