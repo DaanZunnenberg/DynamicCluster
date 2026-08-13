@@ -95,6 +95,20 @@ graph TD
   `compute_cluster_distance_matrix`, `map_distances_to_transition_probabilities`)
   and the vectorization/logit helpers from `utils.py`.
 
+## Installation
+
+The `dynamiccluster` package is installable in editable mode. From the
+repository root, in a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # on Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+This installs the package (dependencies: `numpy`, `scipy`) plus `pytest`
+for running the test suite.
+
 ## Running the code
 
 From the repository root, run `python scripts/run_simulation.py` to
@@ -106,6 +120,18 @@ Configure the simulation/estimation parameters at the top of
 - `run_in_parallel` (default `False`; enables multi-core execution — leave
   `False` while exploring/debugging)
 - `simulation_type`
+
+## Tests
+
+Focused unit tests cover the numerical helpers (`utils.py`), array
+allocation (`initialization.py`), the data-generating process
+(`simulation.py`), and the estimation pipeline (`estimation.py`),
+including an end-to-end smoke test of `estimate_maximum_likelihood`.
+Run them with:
+
+```bash
+pytest
+```
 
 ## Notes on the GAS filter
 
