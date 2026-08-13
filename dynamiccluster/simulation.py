@@ -389,7 +389,7 @@ def simulate_data(state, simulation_params):
         # To change the starting position of cluster 2, pretend it is ahead in time.
         cluster2_time_index = t + time_ahead
         state.true_parameters[t, :, :] = np.column_stack((previous_means,
-                                                      np.row_stack((vech(cluster1_cholesky).T,
+                                                      np.vstack((vech(cluster1_cholesky).T,
                                                                     vech(cluster2_cholesky).T))
                                                       ))
         # Store true states.
