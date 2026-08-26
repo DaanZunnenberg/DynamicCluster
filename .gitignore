@@ -19,3 +19,6 @@ dist/
 .mypy_cache/
 .ruff_cache/
 *.egg
+
+# Local Claude Code agent config (not meant to be shared/committed)
+.claude/
