@@ -22,3 +22,6 @@ dist/
 
 # Local Claude Code agent config (not meant to be shared/committed)
 .claude/
+
+# Jupyter
+.ipynb_checkpoints/
