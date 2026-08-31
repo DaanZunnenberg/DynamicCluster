@@ -158,3 +158,7 @@ The software in this repository is provided "as is", without warranty of
 any kind, express or implied, including but not limited to warranties of
 merchantability, fitness for a particular purpose, and non-infringement.
 Use at your own risk.
+
+---
+
+_Last reviewed: 2026-08-31._
